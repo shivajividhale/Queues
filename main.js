@@ -20,34 +20,42 @@ app.use(function(req, res, next)
 	next(); // Passing the request to the next handler in the stack.
 });
 
+var image_list = {};
+app.post('/upload',[ multer({ dest: './uploads/'}), function(req, res){
+   console.log(req.body) // form fields
+   console.log(req.files) // form files
 
-// app.post('/upload',[ multer({ dest: './uploads/'}), function(req, res){
-//    console.log(req.body) // form fields
-//    console.log(req.files) // form files
+   if( req.files.image )
+   {
+	   fs.readFile( req.files.image.path, function (err, data) {
+	  		if (err) throw err;
+	  		var img = new Buffer(data).toString('base64');
+	  		console.log(img);
+	  		client.lpush("image_list",img);
+		});
+	}
 
-//    if( req.files.image )
-//    {
-// 	   fs.readFile( req.files.image.path, function (err, data) {
-// 	  		if (err) throw err;
-// 	  		var img = new Buffer(data).toString('base64');
-// 	  		console.log(img);
-// 		});
-// 	}
+   res.status(204).end()
+}]);
 
-//    res.status(204).end()
-// }]);
+app.get('/meow', function(req, res) {
+		console.log("meow");
+		res.writeHead(200, {'content-type':'text/html;charset=utf-8'});
+		client.lrange('image_list', 0, -1, function(err, items){
+			if (err) throw err
+			items.forEach(function (imagedata)
+			{
+				console.log("Image:"+imagedata);
+				var show_image = "<h1>\n<img src='data:my_pic.jpg;base64,"+imagedata+"'/>"
+				//console.log(show_image);
+				//res.writeHead(200, {'content-type':'text/html'});
+	   		//res.write(show_image);
+	   		 res.write("<h1>\n<img src='data:my_pic.jpg;base64,"+imagedata+"'/>");
+			});
+		});
 
-// app.get('/meow', function(req, res) {
-// 	{
-// 		if (err) throw err
-// 		res.writeHead(200, {'content-type':'text/html'});
-// 		items.forEach(function (imagedata)
-// 		{
-//    		res.write("<h1>\n<img src='data:my_pic.jpg;base64,"+imagedata+"'/>");
-// 		});
-//    	res.end();
-// 	}
-// })
+   	res.end();
+});
 
 app.get('/get', function(req,res){
 	client.get("key1",function(err,value){
