@@ -16,8 +16,8 @@ var host;
 var options = {}
 var proxy   = httpProxy.createProxyServer(options);
 //Server instances
-var instance1 = 'http://0.0.00:3000';
-var instance2  = 'http://0.0.00:3001';
+var instance1 = 'http://0.0.0.0:3000';
+var instance2  = 'http://0.0.0.0:3001';
 var instances = {};
 client.lpush("instances",instance1);
 client.lpush("instances",instance2);
