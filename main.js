@@ -8,13 +8,20 @@ var client = redis.createClient(6379, '127.0.0.1', {})
 client.set("key", "value");
 client.get("key", function(err,value){ console.log(value)});
 var list = {};
+var host;
+var port;
 ///////////// WEB ROUTES
 
 // Add hook to make it easier to get all visited URLS.
 app.use(function(req, res, next)
 {
 	console.log(req.method, req.url);
-	client.lpush("list",req.url);
+	console.log(host);
+	console.log(port);
+	var url = "http://"+host+":"+port+req.url;
+	console.log(url);
+	client.lpush("list",url);
+	client.ltrim("list", 0, 4);
 	// ... INSERT HERE.
 
 	next(); // Passing the request to the next handler in the stack.
@@ -30,11 +37,12 @@ app.post('/upload',[ multer({ dest: './uploads/'}), function(req, res){
 	   fs.readFile( req.files.image.path, function (err, data) {
 	  		if (err) throw err;
 	  		var img = new Buffer(data).toString('base64');
-	  		console.log(img);
+	  		//console.log(img);
 	  		client.lpush("image_list",img);
+	  		client.ltrim("image_list", 0, 4);
 		});
 	}
-
+	console.log("Uploaded image");
    res.status(204).end()
 }]);
 
@@ -43,18 +51,17 @@ app.get('/meow', function(req, res) {
 		res.writeHead(200, {'content-type':'text/html;charset=utf-8'});
 		client.lrange('image_list', 0, -1, function(err, items){
 			if (err) throw err
+			var show_image = "";
 			items.forEach(function (imagedata)
 			{
-				console.log("Image:"+imagedata);
-				var show_image = "<h1>\n<img src='data:my_pic.jpg;base64,"+imagedata+"'/>"
-				//console.log(show_image);
-				//res.writeHead(200, {'content-type':'text/html'});
-	   		//res.write(show_image);
-	   		 res.write("<h1>\n<img src='data:my_pic.jpg;base64,"+imagedata+"'/>");
+				//console.log("Image:"+imagedata);
+				show_image += "\n<img src='data:my_pic.jpg;base64,"+imagedata+"'/><br>"
 			});
+				// res.write("<h1>\n<img src='data:my_pic.jpg;base64,"+imagedata+"'/>");
+				res.write(show_image);
+   				res.end();
 		});
 
-   	res.end();
 });
 
 app.get('/get', function(req,res){
@@ -73,16 +80,16 @@ app.get('/set', function(req,res){
 
 app.get('/recent',function(req,res){
 	var urls = "";
-	/*for (var key in list){
-		console.log(key)
-		urls += list[key];
-		urls += "\n";
-	}
-	console.log(urls);
-	*/
-	client.lrange('list', 0, -1, function(err, reply) {
-    	console.log(reply); // ['angularjs', 'backbone']
-		res.send(reply);
+	client.lrange('list', 0, -1, function(err, items) {
+    	//console.log(reply); // ['angularjs', 'backbone']
+    	var recent_urls = "";
+    	items.forEach(function (url)
+			{
+				recent_urls += url;
+				recent_urls += "\n";
+			});
+
+		res.send(recent_urls);
 	})
 
 });
@@ -92,8 +99,8 @@ app.get('/recent',function(req,res){
 //HTTP SERVER
 var server = app.listen(3000, function () {
 
-  var host = server.address().address
-  var port = server.address().port
+  host = server.address().address
+  port = server.address().port
 
   console.log('Example app listening at http://%s:%s', host, port)
 })
