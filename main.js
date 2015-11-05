@@ -9,7 +9,7 @@ client.set("key", "value");
 client.get("key", function(err,value){ console.log(value)});
 var list = {};
 var host;
-var port;
+
 ///////////// WEB ROUTES
 
 // Add hook to make it easier to get all visited URLS.
@@ -17,8 +17,8 @@ app.use(function(req, res, next)
 {
 	console.log(req.method, req.url);
 	console.log(host);
-	console.log(port);
-	var url = "http://"+host+":"+port+req.url;
+	console.log(req.socket.localPort);
+	var url = "http://"+host+":"+req.socket.localPort+req.url;
 	console.log(url);
 	client.lpush("list",url);
 	client.ltrim("list", 0, 4);
@@ -103,6 +103,14 @@ var server = app.listen(3000, function () {
   port = server.address().port
 
   console.log('Example app listening at http://%s:%s', host, port)
+})
+
+var server1 = app.listen(3001, function () {
+
+ var host1 = server1.address().address
+  var port1 = server1.address().port
+
+  console.log('Example app listening at http://%s:%s', host1, port1)
 })
 
 app.get('/', function(req, res) {
