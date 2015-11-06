@@ -56,7 +56,7 @@ app.post('/upload',[ multer({ dest: './uploads/'}), function(req, res){
 	  		if (err) throw err;
 	  		var img = new Buffer(data).toString('base64');
 	  		client.lpush("image_list",img);
-	  		client.ltrim("image_list", 0, 4);
+	  		client.ltrim("image_list", 0, 4); //Keep 5 recently used images
 		});
 	}
 	console.log("Uploaded image");
@@ -118,13 +118,11 @@ var server = app.listen(3000, function () {
 
   console.log('Example app listening at http://%s:%s', host, port)
 })
-
+//2nd Instance running on port 3001
 var server1 = app.listen(3001, function () {
-
- var host1 = server1.address().address
-  var port1 = server1.address().port
-
-  console.log('Example app listening at http://%s:%s', host1, port1)
+	var host1 = server1.address().address
+	var port1 = server1.address().port
+	console.log('Example app listening at http://%s:%s', host1, port1)
 })
 
 app.get('/', function(req, res) {
